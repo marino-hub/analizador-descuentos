@@ -1,0 +1,6 @@
+{
+  "appId": "com.analizadordescuentos.app",
+  "appName": "AnalizadorDescuentos",
+  "webDir": "www",
+  "bundledWebRuntime": false
+}
