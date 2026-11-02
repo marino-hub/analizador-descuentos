@@ -1,0 +1,54 @@
+name: Build Android APK
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout del código
+        uses: actions/checkout@v4
+
+      - name: Configurar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Instalar dependencias de JavaScript
+        run: npm install
+
+      - name: Construir proyecto web
+        run: npm run build
+
+      - name: Configurar Java (Requerido para Android)
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+
+      - name: Configurar SDK de Android
+        uses: android-actions/setup-android@v3
+
+      - name: Inicializar contenedor de Android
+        run: |
+          npx cap init AnalizadorDescuentos com.analizadordescuentos.app --web-dir=www
+          npx cap add android
+
+      - name: Sincronizar código web con Android
+        run: npx cap sync android
+
+      - name: Compilar archivo APK (Modo Debug/Pruebas)
+        run: |
+          cd android
+          ./gradlew assembleDebug
+
+      - name: Crear Lanzamiento y subir el APK
+        uses: softprops/action-gh-release@v2
+        with:
+          files: android/app/build/outputs/apk/debug/app-debug.apk
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
