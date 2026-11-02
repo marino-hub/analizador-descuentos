@@ -35,13 +35,18 @@ jobs:
           npx cap init AnalizadorDescuentos com.analizadordescuentos.app --web-dir=www
           npx cap add android
 
-      - name: Sincronizar código web con Android
+            - name: Sincronizar código web con Android
         run: npx cap sync android
+
+      # NUEVO PASO: Inyectar los permisos de internet en el proyecto nativo de Android
+      - name: Configurar permisos de Internet
+        run: cp AndroidManifest.xml android/app/src/main/AndroidManifest.xml
 
       - name: Compilar archivo APK
         run: |
           cd android
           ./gradlew assembleDebug
+
 
       - name: Crear Lanzamiento y subir el APK
         uses: softprops/action-gh-release@v2
