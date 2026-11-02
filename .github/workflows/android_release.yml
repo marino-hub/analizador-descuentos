@@ -24,14 +24,11 @@ jobs:
       - name: Construir proyecto web
         run: npm run build
 
-      - name: Configurar Java (Requerido para Android)
+      - name: Configurar Java y SDK de Android de forma oficial
         uses: actions/setup-java@v4
         with:
           distribution: 'zulu'
           java-version: '17'
-
-      - name: Configurar SDK de Android
-        uses: android-actions/setup-android@v3
 
       - name: Inicializar contenedor de Android
         run: |
@@ -41,7 +38,7 @@ jobs:
       - name: Sincronizar código web con Android
         run: npx cap sync android
 
-      - name: Compilar archivo APK (Modo Debug/Pruebas)
+      - name: Compilar archivo APK
         run: |
           cd android
           ./gradlew assembleDebug
