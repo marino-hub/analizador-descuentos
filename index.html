@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analizador de Descuentos</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: #f4f6f9;
+            margin: 0;
+            padding: 0;
+            color: #333;
+        }
+
+        /* Barra Superior Fija */
+        .header-control {
+            background-color: #ffffff;
+            padding: 15px;
+            position: sticky;
+            top: 0;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            z-index: 100;
+            display: flex;
+            gap: 10px;
+        }
+
+        .search-box {
+            flex: 1;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            box-sizing: border-box;
+            outline: none;
+        }
+
+        .search-btn {
+            background-color: #34c759;
+            color: white;
+            border: none;
+            padding: 0 15px;
+            border-radius: 8px;
+            font-weight: bold;
+            font-size: 16px;
+        }
+
+        /* Contenedor de Tarjetas */
+        .container {
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        /* Tarjeta de Producto Organizada */
+        .card {
+            background: #ffffff;
+            border-radius: 12px;
+            padding: 12px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.02);
+            text-decoration: none;
+            color: inherit;
+        }
+
+        .product-img {
+            width: 75px;
+            height: 75px;
+            border-radius: 8px;
+            object-fit: contain;
+            background-color: #fff;
+        }
+
+        .product-info {
+            flex: 1;
+        }
+
+        .product-title {
+            font-size: 14px;
+            font-weight: 600;
+            margin: 0 0 5px 0;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .price-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .price-old {
+            font-size: 12px;
+            color: #999;
+            text-decoration: line-through;
+        }
+
+        .price-new {
+            font-size: 16px;
+            font-weight: bold;
+            color: #222;
+        }
+
+        .badge-discount {
+            background-color: #ff3b30;
+            color: white;
+            font-size: 12px;
+            font-weight: bold;
+            padding: 3px 6px;
+            border-radius: 6px;
+        }
+
+        .no-results {
+            text-align: center;
+            color: #666;
+            margin-top: 30px;
+            font-size: 15px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header-control">
+        <input type="text" id="inputBusqueda" class="search-box" placeholder="Buscar ofertas en Uruguay...">
+        <button onclick="buscarDescuentos()" class="search-btn">🔍</button>
+    </div>
+
+    <div class="container" id="listaProductos">
+        <div class="no-results">Escribe un producto (ej: smartphone) y toca la lupa para escanear ofertas reales.</div>
+    </div>
+
+    <script>
+        async function buscarDescuentos() {
+            const termino = document.getElementById('inputBusqueda').value.trim();
+            const contenedor = document.getElementById('listaProductos');
+            
+            if (!termino) return;
+            
+            contenedor.innerHTML = '<div class="no-results">Analizando precios actuales...</div>';
+            
+            // Configurado para Mercado Libre Uruguay (MLU)
+            const url = `https://mercadolibre.com{encodeURIComponent(termino)}`;
+            
+            try {
+                const response = await fetch(url);
+                const data = await response.json();
+                const productos = data.results || [];
+                
+                contenedor.innerHTML = '';
+                let ofertasContadas = 0;
+                
+                productos.forEach(prod => {
+                    const precioActual = prod.price;
+                    const precioOriginal = prod.original_price;
+                    
+                    // Filtro inteligente: Solo se muestran si el precio actual es menor al precio de lista original
+                    if (precioOriginal && precioActual < precioOriginal) {
+                        ofertasContadas++;
+                        const porcentaje = Math.round(((precioOriginal - precioActual) / precioOriginal) * 100);
+                        
+                        const tarjetaHtml = `
+                            <a href="${prod.permalink}" target="_blank" class="card">
+                                <img class="product-img" src="${prod.thumbnail}" alt="Producto">
+                                <div class="product-info">
+                                    <p class="product-title">${prod.title}</p>
+                                    <div class="price-row">
+                                        <span class="price-new">$${precioActual}</span>
+                                        <span class="price-old">$${precioOriginal}</span>
+                                        <span class="badge-discount">-${porcentaje}%</span>
+                                    </div>
+                                </div>
+                            </a>
+                        `;
+                        contenedor.insertAdjacentHTML('beforeend', tarjetaHtml);
+                    }
+                });
+                
+                if (ofertasContadas === 0) {
+                    contenedor.innerHTML = '<div class="no-results">No se encontraron liquidaciones o rebajas reales para esta búsqueda hoy.</div>';
+                }
+                
+            } catch (error) {
+                contenedor.innerHTML = '<div class="no-results">⚠️ Error de conexión al escanear los servidores.</div>';
+                console.error(error);
+            }
+        }
+    </script>
+</body>
+</html>
